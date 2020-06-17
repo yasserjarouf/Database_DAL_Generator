@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -40,7 +41,9 @@ namespace Base_Generator_Logic
             }
 
             //build class
-            sb.AppendLine(t1 + string.Format("public class {0}", table.GetStrippedNameBy('_')));
+            // causes issue and overwrites
+            //sb.AppendLine(t1 + string.Format("public class {0}", table.GetStrippedNameBy('_')));
+            sb.AppendLine(t1 + string.Format("public class {0}", table.GetCsRefName()));
             sb.AppendLine(t1 + "{");
             sb.AppendLine();
 
@@ -136,7 +139,7 @@ namespace Base_Generator_Logic
             }
 
             //class declare
-            sb.AppendLine(t1 + string.Format("public class {0}DB", db.Name.Trim().ToUpper()));
+            sb.AppendLine(t1 + string.Format("public class _{0}", db.Name.Trim()));
             sb.AppendLine(t1 + "{");
 
             //get connection string function declare
@@ -150,7 +153,7 @@ namespace Base_Generator_Logic
             sb.AppendLine(t2 + "}");
 
             //close class
-            sb.AppendLine(t1 + "{");
+            sb.AppendLine(t1 + "}");
 
             //close namespace
             if (!string.IsNullOrEmpty(NameSpace))
@@ -186,18 +189,18 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             //declare
-            sb.AppendLine(t2 + string.Format("public static {0} Parse{0}(DataRow row)", table.GetStrippedNameBy('_')));
+            sb.AppendLine(t2 + string.Format("public static {0} Parse{0}(DataRow row)", table.GetCsRefName()));
             //open
             sb.AppendLine(t2 + "{");
 
             //get nullable columns
-            var nullbs = table.Columns.Where(c => c.IsNullable & !c.getCsDataType().Equals(sEnum.CsDataType._String));
+            var nullbs = table.Columns.Where(c => c.IsNullable & !c.getCsDataType().Equals(sEnum.CsDataType._String) & !c.getCsDataType().Equals(sEnum.CsDataType._Byte));
 
             //process the median nullable types
             foreach (sColumn column in nullbs)
             {
-                sb.AppendLine(string.Format(t3 + "{0} __{1} = null;", column.getCsAndIfNullTypeWithIgnoreString(), column.Name));
-                sb.AppendLine(string.Format(t3 + "if (!row.IsNull(\"{0}\")) __{0} = {1}.Parse(row[\"{0}\"].ToString());", column.Name, column.SqlDatatype.GetCsTypeString()));
+                sb.AppendLine(string.Format(t3 + "{0} __{1} = null;", column.getCsAndIfNullTypeWithIgnoreString(), column.GetCsRefName()));
+                sb.AppendLine(string.Format(t3 + "if (!row.IsNull(\"{0}\")) __{3} = {1}.Parse(row[\"{2}\"].ToString());", column.Name, column.SqlDatatype.GetCsTypeString(), column.Name, column.GetCsRefName()));
             }
 
             //new empty line if there are nullables
@@ -205,7 +208,7 @@ namespace Base_Generator_Logic
                 sb.AppendLine();
 
             //return object creation
-            sb.AppendLine(string.Format(t3 + "{0} _{0} = new {0}()", table.GetStrippedNameBy('_')));
+            sb.AppendLine(string.Format(t3 + "{0} _{0} = new {0}()", table.GetCsRefName()));
             sb.AppendLine(t3 + "{");
 
             //output properties values assignment
@@ -214,15 +217,28 @@ namespace Base_Generator_Logic
                 //string is special case
                 if (column.getCsDataType().Equals(sEnum.CsDataType._String))
                 {
-                    sb.AppendLine(t4 + string.Format("{0} = row[\"{0}\"].ToString(),", column.Name));
+                    sb.AppendLine(t4 + string.Format("{0} = row[\"{1}\"].ToString(),", column.GetCsRefName(), column.Name));
+                }
+                else if (column.getCsDataType().Equals(sEnum.CsDataType._Byte))
+                {
+                    sb.AppendLine(t4 + string.Format("{0} = (byte[])row[\"{1}\"],", column.GetCsRefName(), column.Name));
+                }
+                else if (column.getCsDataType().Equals(sEnum.CsDataType._TimeSpan))
+                {
+                    if (column.IsNullable)
+                        sb.AppendLine(t4 + string.Format("{0} = __{0},", column.GetCsRefName()));
+
+                    else
+                        sb.AppendLine(t4 + string.Format("{0} = (TimeSpan)row[\"{1}\"],", column.GetCsRefName(), column.Name));
+
                 }
                 else
                 {
                     if (column.IsNullable)
-                        sb.AppendLine(t4 + string.Format("{0} = __{0},", column.Name));
+                        sb.AppendLine(t4 + string.Format("{0} = __{0},", column.GetCsRefName()));
 
                     else
-                        sb.AppendLine(t4 + string.Format("{0} = {1}.Parse(row[\"{0}\"].ToString()),", column.Name, column.SqlDatatype.GetCsTypeString()));
+                        sb.AppendLine(t4 + string.Format("{0} = {1}.Parse(row[\"{2}\"].ToString()),", column.GetCsRefName(), column.SqlDatatype.GetCsTypeString(), column.Name));
                 }
             }
 
@@ -231,7 +247,7 @@ namespace Base_Generator_Logic
             sb.AppendLine();
 
             //the return clause
-            sb.AppendLine(t3 + string.Format("return _{0};", table.GetStrippedNameBy('_')));
+            sb.AppendLine(t3 + string.Format("return _{0};", table.GetCsRefName()));
 
             //close
             sb.AppendLine(t2 + "}");
@@ -244,11 +260,11 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             if (column == null) return "";
 
             string tblFuNa = table.Name;
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
             string ColNa = column.Name;
             string ColPTy = column.SqlDatatype.GetCsTypeString();
 
@@ -278,10 +294,10 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             if (column == null) return "";
 
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
             string ColNa = column.Name;
             string ColPTy = column.SqlDatatype.GetCsTypeString();
 
@@ -309,7 +325,7 @@ namespace Base_Generator_Logic
         public static string getGetAllDeclarationText(this sTable table, sDb db)
         {
             StringBuilder sb = new StringBuilder();
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.GetCsRefName();
 
             sb.AppendLine(t2 + string.Format("public static List<{0}> GetAll{0}()", tblShNa));
             sb.AppendLine(t2 + "{");
@@ -340,10 +356,10 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             if (column == null) return "";
 
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
 
             sb.AppendLine(t2 + string.Format("public static Int32 Get{0}Count()", tblShNa));
             sb.AppendLine(t2 + "{");
@@ -366,11 +382,11 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             //means no primary key
             if (column == null) return "";
 
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
             string PkColNa = column.Name;
             string PkColPTy = column.SqlDatatype.GetCsTypeString();
             string PkclTpNulbl = column.getCsAndIfNullTypeWithIgnoreString();
@@ -441,11 +457,11 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             if (column == null) return "";
 
             string tblFuNa = table.Name;
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
             string ColNa = column.Name;
             string ColPTy = column.SqlDatatype.GetCsTypeString();
 
@@ -501,7 +517,7 @@ namespace Base_Generator_Logic
         {
             StringBuilder sb = new StringBuilder();
             sColumn column = table.Constraints
-                            .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                            .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             if (column == null) return "";
 
             sb.AppendLine(t2 + "public static DataTable AdvancedSearch(Int32 pageSize, Int32 requiredPage, String fullOrderClause = \"ORDER BY " + column.FQN + " ASC\", String fullWhereClause = \"\", String FullTextSearch = \"\", List<SqlParameter> parameters = null)");
@@ -623,7 +639,7 @@ namespace Base_Generator_Logic
         {
             StringBuilder sb = new StringBuilder();
             sColumn column = table.Constraints
-                            .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                            .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             if (column == null) return "";
 
             sb.AppendLine(t2 + "public static Int32 AdvancedSearchRecordsCount(String fullWhereClause = \"\", String FullTextSearch = \"\", List<SqlParameter> parameters = null)");
@@ -716,11 +732,11 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             //means no primary key
             if (column == null) return "";
 
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
 
             sb.AppendLine(t2 + string.Format("public static SqlCommand BuildAdd{0}Command(SqlConnection cn, SqlTransaction trn, {0} _{0})", tblShNa));
             sb.AppendLine(t2 + "{");
@@ -787,11 +803,11 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             //means no primary key
             if (column == null) return "";
 
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
 
             sb.AppendLine(t2 + string.Format("public static SqlCommand BuildUpdate{0}Command(SqlConnection cn, SqlTransaction trn, {0} _{0})", tblShNa));
             sb.AppendLine(t2 + "{");
@@ -840,14 +856,14 @@ namespace Base_Generator_Logic
             StringBuilder sb = new StringBuilder();
 
             sColumn column = table.Constraints
-                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault().Column;
+                .Where(c => c.ConstraintType.Equals(sEnum.SqlConstraintType.PrimaryKey)).FirstOrDefault()?.Column;
             //means no primary key
             if (column == null) return "";
 
-            string tblShNa = table.GetStrippedNameBy('_');
+            string tblShNa = table.Name;
             string ColNa = column.Name;
             string ColPTy = column.SqlDatatype.GetCsTypeString();
-            
+
             sb.AppendLine(t2 + string.Format("public static SqlCommand BuildDeleteBy{0}IdCommand(SqlConnection cn, SqlTransaction trn, {1} {0}{2})", tblShNa, ColPTy, ColNa));
             sb.AppendLine(t2 + "{");
             sb.AppendLine(t3 + "if (cn == null | trn == null) throw new NoNullAllowedException();");
@@ -888,7 +904,8 @@ namespace Base_Generator_Logic
         public static string getCsNormalPropertyDeclarationText(this sColumn column)
         {
             string type = getCsFinalTypeStringWithNullable(column);
-            string name = column.Name;
+
+            string name = column.GetCsRefName(); // to make sure won't be an issue in class property
 
             string output = string.Format("public {0} {1} {{ get; set; }}", type, name);
             return output;
@@ -908,7 +925,15 @@ namespace Base_Generator_Logic
         {
             //finding a constraint is a must
             sConstraint constraint = column.Table.Constraints.Where(c => c.Column == column).First();
-            string objName = constraint.Name;
+
+
+            if (constraint.Name.Contains("FK_dbo.Bookings_dbo"))
+            {
+                bool sss = true;
+            }
+
+
+            string objName = constraint.Name.Split('.').Last();
             string objType = constraint.PK_Table.GetStrippedNameBy(sProject.escapeChar);
             string paramName = column.Name;
             string paramType = column.SqlDatatype.GetCsTypeString();
@@ -923,7 +948,7 @@ namespace Base_Generator_Logic
             string type = column.SqlDatatype.GetCsTypeString();
             sEnum.CsDataType csdt = column.SqlDatatype.GetCsDataType();
 
-            if (column.IsNullable & !csdt.Equals(sEnum.CsDataType._String) & !csdt.Equals(sEnum.CsDataType.None))
+            if (column.IsNullable & !csdt.Equals(sEnum.CsDataType._String) & !csdt.Equals(sEnum.CsDataType._Byte) & !csdt.Equals(sEnum.CsDataType.None))
             {
                 return type + "?";
             }
@@ -1000,6 +1025,13 @@ namespace Base_Generator_Logic
                         eq = string.Format("{0}{1}", prnt, colNa);
                     return string.Format("{0}.Parameters.Add(\"{1}\", {2}).Value = {3};", commandName, column.getBasicParameterName(), tp, eq);
 
+                case sEnum.SqlDataType._varbinary:
+                    tp = "SqlDbType.Binary";
+                    if (column.IsNullable)
+                        eq = string.Format("{0}{1} == null ? (Object)DBNull.Value : {0}{1}", prnt, colNa);
+                    else
+                        eq = string.Format("{0}{1}", prnt, colNa);
+                    return string.Format("{0}.Parameters.Add(\"{1}\", {2}).Value = {3};", commandName, column.getBasicParameterName(), tp, eq);
 
             }
 

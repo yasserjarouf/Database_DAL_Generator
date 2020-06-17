@@ -34,5 +34,11 @@ namespace Base_Generator_Logic
             if (idx < 1) return Name;
             return Name.Substring(0, idx);
         }
+
+
+        public string GetCsRefName()
+        {
+            return Name.Trim().Replace(" ", "_");
+        }
     }
 }

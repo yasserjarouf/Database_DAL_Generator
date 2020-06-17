@@ -48,6 +48,8 @@
             this.txtCnString = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.btnBuildDALSQL = new System.Windows.Forms.Button();
+            this.btnSaveConfig = new System.Windows.Forms.Button();
+            this.btnLoad = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lbUsings
@@ -175,9 +177,9 @@
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(12, 522);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(103, 17);
+            this.label5.Size = new System.Drawing.Size(192, 17);
             this.label5.TabIndex = 16;
-            this.label5.Text = "Top App Name";
+            this.label5.Text = "Top App Name (Namespace)";
             // 
             // txtTopAppName
             // 
@@ -230,11 +232,33 @@
             this.btnBuildDALSQL.UseVisualStyleBackColor = true;
             this.btnBuildDALSQL.Click += new System.EventHandler(this.btnBuildDALSQL_Click);
             // 
+            // btnSaveConfig
+            // 
+            this.btnSaveConfig.Location = new System.Drawing.Point(619, 217);
+            this.btnSaveConfig.Name = "btnSaveConfig";
+            this.btnSaveConfig.Size = new System.Drawing.Size(101, 36);
+            this.btnSaveConfig.TabIndex = 23;
+            this.btnSaveConfig.Text = "Save Config";
+            this.btnSaveConfig.UseVisualStyleBackColor = true;
+            this.btnSaveConfig.Click += new System.EventHandler(this.btnSaveConfig_Click);
+            // 
+            // btnLoad
+            // 
+            this.btnLoad.Location = new System.Drawing.Point(619, 268);
+            this.btnLoad.Name = "btnLoad";
+            this.btnLoad.Size = new System.Drawing.Size(101, 36);
+            this.btnLoad.TabIndex = 23;
+            this.btnLoad.Text = "Load Config";
+            this.btnLoad.UseVisualStyleBackColor = true;
+            this.btnLoad.Click += new System.EventHandler(this.btnLoad_Click);
+            // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(748, 683);
+            this.Controls.Add(this.btnLoad);
+            this.Controls.Add(this.btnSaveConfig);
             this.Controls.Add(this.btnBuildDALSQL);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.txtCnString);
@@ -287,6 +311,8 @@
         private System.Windows.Forms.TextBox txtCnString;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button btnBuildDALSQL;
+        private System.Windows.Forms.Button btnSaveConfig;
+        private System.Windows.Forms.Button btnLoad;
     }
 }
 

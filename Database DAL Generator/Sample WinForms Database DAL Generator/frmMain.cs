@@ -1,4 +1,7 @@
 ﻿using Base_Generator_Logic;
+using Newtonsoft.Json;
+using Sample_WinForms_Database_DAL_Generator.Helper;
+using Sample_WinForms_Database_DAL_Generator.Properties;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -22,8 +25,8 @@ namespace Sample_WinForms_Database_DAL_Generator
 
         private void buildClassesFromExcels()
         {
-            string dbName = txtDbName.Text.Trim().ToUpper();
-            string appname = txtTopAppName.Text.Trim().ToUpper();
+            string dbName = txtDbName.Text.Trim();
+            string appname = txtTopAppName.Text.Trim();
 
             if (dbName == "" | appname == "")
             {
@@ -68,21 +71,21 @@ namespace Sample_WinForms_Database_DAL_Generator
                 if (cbNSPrefix.Checked) ns = txtNSPrefix.Text.Trim();
                 else
                 {
-                    string topAppNS = txtTopAppName.Text.Trim().ToUpper() + ".";
-                    string schem = (cbIgnoreTblSchema.Checked) ? "" : table.SchemaName.Trim().ToUpper() + ".";
+                    string topAppNS = txtTopAppName.Text.Trim() + ".";
+                    string schem = (cbIgnoreTblSchema.Checked) ? "" : table.SchemaName.Trim() + ".";
                     ns = string.Format("{2}{0}.DAL.{1}DataObjects", dbName, schem, topAppNS);
                 }
 
                 string txtTblCls = table.BuildClassFileText(project.Database, usings, ns);
-                sProject.WriteStringToFile(txtTblCls, tblFold, table.GetStrippedNameBy('_').Trim() + txtTblDbOutExten.Text);
+                sProject.WriteStringToFile(txtTblCls, tblFold, table.Name.Trim() + txtTblDbOutExten.Text);
             }
 
             string dbFold = Path.Combine(fullFold, "Output", "Database");
             if (!Directory.Exists(dbFold)) Directory.CreateDirectory(dbFold);
             //remove the last using since it is added before and it is the same database using also
             usings.RemoveAt(usings.Count - 1);
-            string txtDbCls = project.Database.BuildDbClassFileText(usings, string.Format("{0}.{1}.DAL.Database", txtTopAppName.Text.Trim().ToUpper(), dbName.Trim().ToUpper()));
-            sProject.WriteStringToFile(txtDbCls, dbFold, string.Format("{0}DB{1}", dbName.ToUpper().Trim(), txtTblDbOutExten.Text));
+            string txtDbCls = project.Database.BuildDbClassFileText(usings, string.Format("{0}.{1}.DAL.Database", txtTopAppName.Text.Trim(), dbName.Trim()));
+            sProject.WriteStringToFile(txtDbCls, dbFold, string.Format("{0}{1}", dbName.Trim(), txtTblDbOutExten.Text));
 
             MessageBox.Show("Done!");
         }
@@ -95,6 +98,17 @@ namespace Sample_WinForms_Database_DAL_Generator
             lbUsings.Items.Add("System.Collections.Generic");
 
             txtOutDir.Text = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory).ToString();
+
+            LoadConfig();
+
+
+
+
+            //var all = GATAC.GATACDb.DAL.DataObjects.BadgeId_Extract_20191023.GetAllBadgeId_Extract_20191023();
+            //var all2 = GATAC.GATACDb.DAL.DataObjects.Policies.GetAllPolicies();
+
+            //var bookings = GATAC.GATACDb.DAL.DataObjects.Bookings.GetAllBookings();
+
         }
 
 
@@ -192,8 +206,8 @@ namespace Sample_WinForms_Database_DAL_Generator
 
 
 
-            string dbName = txtDbName.Text.Trim().ToUpper();
-            string appname = txtTopAppName.Text.Trim().ToUpper();
+            string dbName = txtDbName.Text.Trim();
+            string appname = txtTopAppName.Text.Trim();
 
             if (dbName == "" | appname == "")
             {
@@ -231,21 +245,21 @@ namespace Sample_WinForms_Database_DAL_Generator
                 if (cbNSPrefix.Checked) ns = txtNSPrefix.Text.Trim();
                 else
                 {
-                    string topAppNS = txtTopAppName.Text.Trim().ToUpper() + ".";
-                    string schem = (cbIgnoreTblSchema.Checked) ? "" : table.SchemaName.Trim().ToUpper() + ".";
+                    string topAppNS = txtTopAppName.Text.Trim() + ".";
+                    string schem = (cbIgnoreTblSchema.Checked) ? "" : table.SchemaName.Trim() + ".";
                     ns = string.Format("{2}{0}.DAL.{1}DataObjects", dbName, schem, topAppNS);
                 }
 
                 string txtTblCls = table.BuildClassFileText(project.Database, usings, ns);
-                sProject.WriteStringToFile(txtTblCls, tblFold, table.GetStrippedNameBy('_').Trim() + txtTblDbOutExten.Text);
+                sProject.WriteStringToFile(txtTblCls, tblFold, table.Name.Trim() + txtTblDbOutExten.Text);
             }
 
             string dbFold = Path.Combine(fullFold, "Output", "Database");
             if (!Directory.Exists(dbFold)) Directory.CreateDirectory(dbFold);
             //remove the last using since it is added before and it is the same database using also
             usings.RemoveAt(usings.Count - 1);
-            string txtDbCls = project.Database.BuildDbClassFileText(usings, string.Format("{0}.{1}.DAL.Database", txtTopAppName.Text.Trim().ToUpper(), dbName.Trim().ToUpper()));
-            sProject.WriteStringToFile(txtDbCls, dbFold, string.Format("{0}DB{1}", dbName.ToUpper().Trim(), txtTblDbOutExten.Text));
+            string txtDbCls = project.Database.BuildDbClassFileText(usings, string.Format("{0}.{1}.DAL.Database", txtTopAppName.Text.Trim(), dbName.Trim()));
+            sProject.WriteStringToFile(txtDbCls, dbFold, string.Format("{0}{1}", dbName.Trim(), txtTblDbOutExten.Text));
 
 
             Cursor.Current = Cursors.Default;
@@ -261,52 +275,129 @@ namespace Sample_WinForms_Database_DAL_Generator
 
 
 
+
+
+        private void btnSaveConfig_Click(object sender, EventArgs e)
+        {
+            SaveConfig();
+        }
+
+        void SaveConfig()
+        {
+            var conf = new AppConfig();
+            conf.Usings = new List<string>();
+
+            foreach (var item in lbUsings.Items)
+            {
+                conf.Usings.Add((string)item);
+            }
+
+            conf.OutputDirectory = (!string.IsNullOrEmpty(txtOutDir.Text)) ? txtOutDir.Text : Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory).ToString();
+            conf.ConnectionString = txtCnString.Text;
+            conf.AppName = txtTopAppName.Text;
+            conf.DbName = txtDbName.Text;
+            conf.OutputFilesExtension = txtTblDbOutExten.Text;
+            conf.IgnoreTableSchema = cbIgnoreTblSchema.Checked;
+
+            if (cbNSPrefix.Checked) conf.NamespacePrefix = txtNSPrefix.Text;
+
+            Settings.Default.AppConfig = JsonConvert.SerializeObject(conf);
+            Settings.Default.Save();
+        }
+
+        void LoadConfig()
+        {
+            var confTxt = Settings.Default.AppConfig;
+            if (string.IsNullOrWhiteSpace(confTxt)) return;
+            else
+            {
+                var conf = JsonConvert.DeserializeObject<AppConfig>(confTxt);
+                lbUsings.Items.Clear();
+
+                foreach (var item in conf.Usings)
+                {
+                    lbUsings.Items.Add(item);
+                }
+
+                txtOutDir.Text = conf.OutputDirectory;
+                txtCnString.Text = conf.ConnectionString;
+                txtTopAppName.Text = conf.AppName;
+                txtDbName.Text = conf.DbName;
+                txtTblDbOutExten.Text = conf.OutputFilesExtension;
+                cbIgnoreTblSchema.Checked = conf.IgnoreTableSchema;
+
+                if (!string.IsNullOrWhiteSpace(conf.NamespacePrefix))
+                {
+                    cbNSPrefix.Checked = true;
+                    txtNSPrefix.Text = conf.NamespacePrefix;
+                }
+            }
+        }
+
+        private void btnLoad_Click(object sender, EventArgs e)
+        {
+            LoadConfig();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
         #region sqlscripts
 
         string cmTblString = @"select TABLE_NAME, TABLE_SCHEMA
-from INFORMATION_SCHEMA.TABLES
-where TABLE_TYPE = 'Base Table'";
+            from INFORMATION_SCHEMA.TABLES
+            where TABLE_TYPE = 'Base Table'";
 
         string cmConstrtString = @"IF OBJECT_ID('tempdb..#tbl') IS NOT NULL DROP TABLE #tbl
-select * into #tbl
-from (select t1.CONSTRAINT_NAME, t1.CONSTRAINT_SCHEMA, t1.UNIQUE_CONSTRAINT_NAME, t1.UNIQUE_CONSTRAINT_SCHEMA, t2.TABLE_NAME, t2.TABLE_SCHEMA,
-t3.COLUMN_NAME
-from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as t1
-left join (
-select *
-from INFORMATION_SCHEMA.TABLE_CONSTRAINTS
-where CONSTRAINT_TYPE = 'PRIMARY KEY'
-) as t2
-on t2.CONSTRAINT_NAME = t1.UNIQUE_CONSTRAINT_NAME and t2.CONSTRAINT_SCHEMA = t1.UNIQUE_CONSTRAINT_SCHEMA
-left join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE as t3
-on t3.CONSTRAINT_NAME = t1.UNIQUE_CONSTRAINT_NAME and t3.CONSTRAINT_SCHEMA = t1.UNIQUE_CONSTRAINT_SCHEMA) as tbl
---get constraints
-select t1.CONSTRAINT_SCHEMA, t1.CONSTRAINT_NAME, t1.TABLE_SCHEMA, t1.TABLE_NAME, t1.CONSTRAINT_TYPE, t2.COLUMN_NAME,
-(select #tbl.TABLE_NAME
-from #tbl
-where #tbl.CONSTRAINT_NAME = t1.CONSTRAINT_NAME
-and #tbl.CONSTRAINT_SCHEMA = t1.CONSTRAINT_SCHEMA) as PK_TABLE_NAME,
-(select #tbl.TABLE_SCHEMA
-from #tbl
-where #tbl.CONSTRAINT_NAME = t1.CONSTRAINT_NAME
-and #tbl.CONSTRAINT_SCHEMA = t1.CONSTRAINT_SCHEMA)as PK_TABLE_SCHEMA,
-(select #tbl.COLUMN_NAME
-from #tbl
-where #tbl.CONSTRAINT_NAME = t1.CONSTRAINT_NAME
-and #tbl.CONSTRAINT_SCHEMA = t1.CONSTRAINT_SCHEMA)as PK_COLUMN_NAME
-from INFORMATION_SCHEMA.TABLE_CONSTRAINTS as t1
-inner join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE as t2
-on t1.TABLE_SCHEMA = t2.TABLE_SCHEMA and t1.TABLE_NAME = t2.TABLE_NAME and t1.CONSTRAINT_SCHEMA = t2.CONSTRAINT_SCHEMA and t1.CONSTRAINT_NAME = t2.CONSTRAINT_NAME
-drop table #tbl";
+            select * into #tbl
+            from (select t1.CONSTRAINT_NAME, t1.CONSTRAINT_SCHEMA, t1.UNIQUE_CONSTRAINT_NAME, t1.UNIQUE_CONSTRAINT_SCHEMA, t2.TABLE_NAME, t2.TABLE_SCHEMA,
+            t3.COLUMN_NAME
+            from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS as t1
+            left join (
+            select *
+            from INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+            where CONSTRAINT_TYPE = 'PRIMARY KEY'
+            ) as t2
+            on t2.CONSTRAINT_NAME = t1.UNIQUE_CONSTRAINT_NAME and t2.CONSTRAINT_SCHEMA = t1.UNIQUE_CONSTRAINT_SCHEMA
+            left join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE as t3
+            on t3.CONSTRAINT_NAME = t1.UNIQUE_CONSTRAINT_NAME and t3.CONSTRAINT_SCHEMA = t1.UNIQUE_CONSTRAINT_SCHEMA) as tbl
+            --get constraints
+            select t1.CONSTRAINT_SCHEMA, t1.CONSTRAINT_NAME, t1.TABLE_SCHEMA, t1.TABLE_NAME, t1.CONSTRAINT_TYPE, t2.COLUMN_NAME,
+            (select #tbl.TABLE_NAME
+            from #tbl
+            where #tbl.CONSTRAINT_NAME = t1.CONSTRAINT_NAME
+            and #tbl.CONSTRAINT_SCHEMA = t1.CONSTRAINT_SCHEMA) as PK_TABLE_NAME,
+            (select #tbl.TABLE_SCHEMA
+            from #tbl
+            where #tbl.CONSTRAINT_NAME = t1.CONSTRAINT_NAME
+            and #tbl.CONSTRAINT_SCHEMA = t1.CONSTRAINT_SCHEMA)as PK_TABLE_SCHEMA,
+            (select #tbl.COLUMN_NAME
+            from #tbl
+            where #tbl.CONSTRAINT_NAME = t1.CONSTRAINT_NAME
+            and #tbl.CONSTRAINT_SCHEMA = t1.CONSTRAINT_SCHEMA)as PK_COLUMN_NAME
+            from INFORMATION_SCHEMA.TABLE_CONSTRAINTS as t1
+            inner join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE as t2
+            on t1.TABLE_SCHEMA = t2.TABLE_SCHEMA and t1.TABLE_NAME = t2.TABLE_NAME and t1.CONSTRAINT_SCHEMA = t2.CONSTRAINT_SCHEMA and t1.CONSTRAINT_NAME = t2.CONSTRAINT_NAME
+            drop table #tbl";
 
         string cmColsString = @"select TABLE_NAME, TABLE_SCHEMA, COLUMN_NAME, ORDINAL_POSITION, DATA_TYPE, case when IS_NULLABLE = 'YES' then 'TRUE' else 'FALSE' end as IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE,
-(select case  when t2.Is_Identity = 1 Then 'TRUE' else 'FALSE' END as IS_IDENTITY
-from (select Object_Name(object_id) as TableName, OBJECT_SCHEMA_NAME(object_id) as TableSchema, name As ColumnName, is_identity As Is_Identity
-		from sys.columns) as t2
-		where t2.TableName = TABLE_NAME and t2.TableSchema = TABLE_SCHEMA and t2.ColumnName = COLUMN_NAME) as IS_IDENTITY
-from INFORMATION_SCHEMA.COLUMNS";
+            (select case  when t2.Is_Identity = 1 Then 'TRUE' else 'FALSE' END as IS_IDENTITY
+            from (select Object_Name(object_id) as TableName, OBJECT_SCHEMA_NAME(object_id) as TableSchema, name As ColumnName, is_identity As Is_Identity
+		            from sys.columns) as t2
+		            where t2.TableName = TABLE_NAME and t2.TableSchema = TABLE_SCHEMA and t2.ColumnName = COLUMN_NAME) as IS_IDENTITY
+            from INFORMATION_SCHEMA.COLUMNS";
 
         #endregion
+
+
 
     }
 }

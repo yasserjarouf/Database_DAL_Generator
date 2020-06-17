@@ -18,12 +18,12 @@ namespace Base_Generator_Logic
 
         public string getDbNameSpace(string appname)
         {
-            return string.Format("{0}.{1}.DAL.Database", appname.Trim().ToUpper(), Name.Trim().ToUpper());
+            return string.Format("{0}.{1}.DAL.Database", appname.Trim(), Name.Trim());
         }
 
         public string getCnString()
         {
-            return string.Format("{0}DB.ConnectionString()", Name.ToUpper().Trim());
+            return string.Format("_{0}.ConnectionString()", Name.Trim());
         }
 
         public string getConnectionBlock(bool withOpen, string tabs = "")

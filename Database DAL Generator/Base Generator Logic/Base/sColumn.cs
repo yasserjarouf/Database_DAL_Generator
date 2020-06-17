@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Base_Generator_Logic
@@ -30,6 +31,12 @@ namespace Base_Generator_Logic
             if (table == null | string.IsNullOrEmpty(table.Name?.Trim()))
                 throw new Exception("Table must be passed properly");
             Table = table;
+        }
+
+        public string GetCsRefName()
+        {
+            var rs = Regex.Replace(Name, @"\W", "_");
+            return Regex.Replace(rs, @"_+", "_");
         }
 
     }

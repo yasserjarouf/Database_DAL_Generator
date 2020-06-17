@@ -17,6 +17,11 @@ namespace Base_Generator_Logic
                 case SqlDataType._varchar: return CsDataType._String;
                 case SqlDataType._char: return CsDataType._String;
                 case SqlDataType._bit: return CsDataType._Boolean;
+                case SqlDataType._varbinary: return CsDataType._Byte;
+                case SqlDataType._bigint: return CsDataType._Int64;
+                case SqlDataType._float: return CsDataType._Double;
+                case SqlDataType._time: return CsDataType._TimeSpan;
+                case SqlDataType._date: return CsDataType._DateTime;
 
                 default: return CsDataType.None;
             }
@@ -27,7 +32,8 @@ namespace Base_Generator_Logic
         {
             //return N/A if it is not convertable
             if (sqlDataType.Equals(SqlDataType.None)) return "N/A";
-
+            
+            if (sqlDataType.GetCsDataType() == CsDataType._Byte) return "byte[]";
             //return the converted value but remove the '_' char which is the first letter by using substring
             else return sqlDataType.GetCsDataType().ToString().Substring(1);
         }
@@ -39,11 +45,17 @@ namespace Base_Generator_Logic
                 case "bit": return SqlDataType._bit;
                 case "char": return SqlDataType._char;
                 case "datetime": return SqlDataType._datetime;
+                case "datetime2": return SqlDataType._datetime;
                 case "decimal": return SqlDataType._decimal;
                 case "int": return SqlDataType._int;
                 case "nvarchar": return SqlDataType._nvarchar;
                 case "uniqueidentifier": return SqlDataType._uniqueidentifier;
                 case "varchar": return SqlDataType._varchar;
+                case "varbinary": return SqlDataType._varbinary;
+                case "bigint": return SqlDataType._bigint;
+                case "float": return SqlDataType._float;
+                case "time": return SqlDataType._time;
+                case "date": return SqlDataType._date;
                 default: return SqlDataType.None;
             }
         }
@@ -57,8 +69,13 @@ namespace Base_Generator_Logic
             _datetime,
             _nvarchar,
             _varchar,
+            _varbinary,
             _char,
-            _bit
+            _bit,
+            _bigint,
+            _float,
+            _time,
+            _date
         }
 
         public enum CsDataType
@@ -69,7 +86,11 @@ namespace Base_Generator_Logic
             _Guid,
             _DateTime,
             _String,
-            _Boolean
+            _Boolean,
+            _Byte,
+            _Int64,
+            _Double,
+            _TimeSpan
         }
 
         public enum SqlConstraintType
