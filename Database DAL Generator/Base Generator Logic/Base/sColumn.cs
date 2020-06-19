@@ -9,13 +9,32 @@ namespace Base_Generator_Logic
 {
     public class sColumn
     {
+
         public string Name { get; set; }
+
         public sEnum.SqlDataType SqlDatatype { get; set; }
+
         public bool IsNullable { get; set; }
+
         public bool IsIdentity { get; set; }
+
         public int Position { get; set; }
+
         public List<Tuple<sEnum.SqlOption, dynamic>> Options { get; set; }
+
         public sTable Table { get; }
+
+
+
+        // constructor that needs a true referenced column
+        public sColumn(sTable table)
+        {
+            if (table == null | string.IsNullOrEmpty(table.Name?.Trim()))
+                throw new Exception("Table must be passed properly");
+            Table = table;
+        }
+
+
 
         public string FQN
         {
@@ -25,18 +44,15 @@ namespace Base_Generator_Logic
             }
         }
 
-        //constructor that needs a true referenced column not creating new!
-        public sColumn(sTable table)
-        {
-            if (table == null | string.IsNullOrEmpty(table.Name?.Trim()))
-                throw new Exception("Table must be passed properly");
-            Table = table;
-        }
 
-        public string GetCsRefName()
+
+        public string CsRefName
         {
-            var rs = Regex.Replace(Name, @"\W", "_");
-            return Regex.Replace(rs, @"_+", "_");
+            get
+            {
+                var rs = Regex.Replace(Name, @"\W", "_");
+                return Regex.Replace(rs, @"_+", "_").Trim();
+            }
         }
 
     }

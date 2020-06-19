@@ -103,6 +103,15 @@ namespace Sample_WinForms_Database_DAL_Generator
 
 
 
+            //var custom = new custom();
+            //var nm = custom.Objects.Student.GetName();
+            //var iddd = (custom.Objects.Student as StudentNew).getSalary(5);
+
+            //var usrs = GATAC.GATACDb.DAL.DataObjects.Users.AdvancedSearch(FullTextSearch: "arg");
+
+
+
+            //var dd = GATAC.GATACDb.DAL.DataObjects.ShiftRecords.AdvancedSearch(5, 4);
 
             //var all = GATAC.GATACDb.DAL.DataObjects.BadgeId_Extract_20191023.GetAllBadgeId_Extract_20191023();
             //var all2 = GATAC.GATACDb.DAL.DataObjects.Policies.GetAllPolicies();
@@ -179,10 +188,11 @@ namespace Sample_WinForms_Database_DAL_Generator
 
         private void buildClassesFromSQL()
         {
+            string cnString = txtCnString.Text;
             DataSet dsTbl = new DataSet();
             DataSet dsConstr = new DataSet();
             DataSet dsCols = new DataSet();
-            using (SqlConnection cn = new SqlConnection(txtCnString.Text))
+            using (SqlConnection cn = new SqlConnection(cnString))
             {
                 SqlCommand cm = cn.CreateCommand();
                 cn.Open();
@@ -206,6 +216,10 @@ namespace Sample_WinForms_Database_DAL_Generator
 
 
 
+
+
+
+
             string dbName = txtDbName.Text.Trim();
             string appname = txtTopAppName.Text.Trim();
 
@@ -224,7 +238,10 @@ namespace Sample_WinForms_Database_DAL_Generator
 
             sProject project = new sProject(dbName, dsTbl.Tables[0], dsConstr.Tables[0], dsCols.Tables[0]);
 
+
+
             List<string> usings = new List<string>();
+
 
             foreach (var item in lbUsings.Items)
             {
@@ -258,7 +275,9 @@ namespace Sample_WinForms_Database_DAL_Generator
             if (!Directory.Exists(dbFold)) Directory.CreateDirectory(dbFold);
             //remove the last using since it is added before and it is the same database using also
             usings.RemoveAt(usings.Count - 1);
-            string txtDbCls = project.Database.BuildDbClassFileText(usings, string.Format("{0}.{1}.DAL.Database", txtTopAppName.Text.Trim(), dbName.Trim()));
+
+            string dbNS = string.Format("{0}.{1}.DAL.Database", txtTopAppName.Text.Trim(), dbName.Trim());
+            string txtDbCls = project.Database.BuildDbClassFileText(usings, dbNS, cnString);
             sProject.WriteStringToFile(txtDbCls, dbFold, string.Format("{0}{1}", dbName.Trim(), txtTblDbOutExten.Text));
 
 

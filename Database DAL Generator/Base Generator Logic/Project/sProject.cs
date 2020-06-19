@@ -12,16 +12,22 @@ namespace Base_Generator_Logic
 {
     public class sProject
     {
-        public static char escapeChar = '_';
+
         public sDb Database { get; set; }
 
-        //normal constructor that has no real usage
-        public sProject(string dbName)
+
+
+        // constructor that loads the project from excel
+        public sProject(string dbName, string path, string fileName)
         {
             Database = new sDb();
             Database.Name = dbName;
+            this.LoadExcel(path, fileName);
         }
 
+
+
+        // constructor that's needed in direct sql build
         public sProject(string dbName, System.Data.DataTable tables, System.Data.DataTable constraints, System.Data.DataTable columns)
         {
             Database = new sDb();
@@ -32,16 +38,16 @@ namespace Base_Generator_Logic
             {
                 sTable table = new sTable()
                 {
-                    //prepare columns list
+                    // prepare columns list
                     Columns = new List<sColumn>(),
 
-                    //prepare constraints list
+                    // prepare constraints list
                     Constraints = new List<sConstraint>(),
 
-                    //fetch TABLE_NAME
+                    // fetch TABLE_NAME
                     Name = (row["TABLE_NAME"] != null) ? row["TABLE_NAME"].ToString() : "",
 
-                    //fetch TABLE_SCHEMA
+                    // fetch TABLE_SCHEMA
                     SchemaName = (row["TABLE_SCHEMA"] != null) ? row["TABLE_SCHEMA"].ToString() : ""
                 };
                 Database.Tables.Add(table);
@@ -160,13 +166,7 @@ namespace Base_Generator_Logic
 
         }
 
-        //constructor that loads a file and uses a db name
-        public sProject(string dbName, string path, string fileName)
-        {
-            Database = new sDb();
-            Database.Name = dbName;
-            this.LoadExcel(path, fileName);
-        }
+
 
         private void FetchTables(Range range, sDb database)
         {
@@ -195,6 +195,8 @@ namespace Base_Generator_Logic
             }
 
         }
+
+
 
         private void FetchColumns(Range range, sDb database)
         {
@@ -263,6 +265,8 @@ namespace Base_Generator_Logic
             }
         }
 
+
+
         private void FetchConstraints(Range range, sDb database)
         {
             int i = 2;
@@ -313,17 +317,13 @@ namespace Base_Generator_Logic
                 }
                 else continue;
 
-
-
-
-
-
-
                 table.Constraints.Add(constraint);
 
                 i++;
             }
         }
+
+
 
         private void LoadExcel(string path, string fileName)
         {
@@ -365,6 +365,8 @@ namespace Base_Generator_Logic
             excel.Quit();
             Marshal.ReleaseComObject(excel);
         }
+
+
 
         public static void WriteStringToFile(string text, string path, string fileName)
         {

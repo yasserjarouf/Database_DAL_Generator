@@ -48,6 +48,9 @@
     <Compile Include="Base\sTable.cs" />
     <Compile Include="Project\sProject.cs" />
     <Compile Include="Project\sTasks.cs" />
+    <Compile Include="Project\sTasksExtension\sColumnExtensions.cs" />
+    <Compile Include="Project\sTasksExtension\sTableExtensions.cs" />
+    <Compile Include="Project\sTasksExtension\sTableTasksExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
